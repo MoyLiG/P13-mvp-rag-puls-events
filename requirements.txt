@@ -4,7 +4,7 @@ langchain==0.3.7
 langchain-core==0.3.21
 langchain-community==0.3.7
 langchain-mistralai==0.2.2
-langchain-text-splitters==0.3.2
+langchain-text-splitters==1.1.2
 langchain-postgres==0.0.13          # intègre PGVector (même interface VectorStore que FAISS)
 mistralai==1.2.5
 rank_bm25==0.2.2
