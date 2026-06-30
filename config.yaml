@@ -1,0 +1,59 @@
+# =====================================================================
+# Configuration slice MVP P13 (héritée du POC P11)
+# =====================================================================
+
+data_source:
+  base_url: "https://public.opendatasoft.com/api/explore/v2.1/catalog/datasets/evenements-publics-openagenda/records"
+  page_size: 100
+  request_timeout_s: 30
+  retry_attempts: 4
+  retry_initial_wait_s: 1
+
+filters:
+  region: "Pays de la Loire"
+  department: "Loire-Atlantique"
+  city: null
+  since_days: 365
+  max_records: 10000
+  time_mode: "upcoming"
+
+preprocessing:
+  min_description_length: 30
+  exclude_title_keywords:
+    - "job dating"
+    - "forum emploi"
+    - "indemnisation"
+  exclude_agendas:
+    - "france travail"
+    - "pole emploi"
+
+# Identiques au POC : garantit que les textes de chunks correspondent au cache d'embeddings P11.
+chunking:
+  chunk_size: 1200
+  chunk_overlap: 80
+
+models:
+  embedding_model: "mistral-embed"
+  llm_model: "mistral-small-latest"
+  llm_temperature: 0.2
+  embedding_batch_size: 24
+  embedding_min_interval_s: 1.1
+
+retrieval:
+  search_type: "mmr"
+  k: 6
+  fetch_k: 18
+  max_question_length: 500
+  max_answer_tokens: 400
+  use_hybrid: true
+  bm25_weight: 0.4
+  use_reranker: false        # benché : dégrade le recall sur ce corpus (rapport §3.8) -> opt-in
+  reranker_model: "BAAI/bge-reranker-v2-m3"
+  rerank_candidates: 24
+
+paths:
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  vectorstore_dir: "data/vectorstore"
+  eval_dataset: "data/eval/qa_dataset.json"
+  eval_results: "data/eval/results.csv"

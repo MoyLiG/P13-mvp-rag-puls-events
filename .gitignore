@@ -1,0 +1,33 @@
+# Secrets & env
+.env
+.env.*
+!.env.example
+
+# Données (non publiées)
+data/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Traces d'outillage (non publiées)
+.claude/
+CLAUDE.md
+graphify-out/
+.graphify*/
+.graphifyignore
+tasks/
+docs/superpowers/
+MEMORY.md
+lessons*.md
+
+# Archives & build des livrables (non publiés)
+*.zip
+scripts/build_deliverables.py
+scripts/generate_archi_png.py
+scripts/generate_evolution_png.py
+
+# Brief OC + build du deck (non publiés)
+Consignes_OC.txt
+presentation/build_deck.py
