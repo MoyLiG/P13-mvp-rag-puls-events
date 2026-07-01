@@ -1,6 +1,6 @@
 # Slice MVP P13 — versions pinnées (cohérentes avec le POC P11, stack langchain 0.3.x)
 # Tourne en conteneur : n'utilise PAS le Python global de la machine.
-langchain==0.3.7
+langchain==1.3.9
 langchain-core==1.3.3
 langchain-community==0.3.7
 langchain-mistralai==0.2.2
