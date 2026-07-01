@@ -2,7 +2,7 @@
 # Tourne en conteneur : n'utilise PAS le Python global de la machine.
 langchain==0.3.7
 langchain-core==1.3.3
-langchain-community==0.3.7
+langchain-community==0.3.27
 langchain-mistralai==0.2.2
 langchain-text-splitters==1.1.2
 langchain-postgres==0.0.13          # intègre PGVector (même interface VectorStore que FAISS)
