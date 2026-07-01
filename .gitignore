@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.env
+.venv/
+data/embed_cache/
+data/eval/results.csv
+data/eval/bench_*.csv
+
+# Scaffolding de process (plans, lessons, todo) — reste sur disque, hors git
+tasks/

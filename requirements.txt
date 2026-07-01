@@ -1,0 +1,30 @@
+# Slice MVP P13 — versions pinnées (cohérentes avec le POC P11, stack langchain 0.3.x)
+# Tourne en conteneur : n'utilise PAS le Python global de la machine.
+langchain==0.3.30
+langchain-core==0.3.85
+langchain-community==0.3.27
+langchain-mistralai==0.2.2
+langchain-text-splitters==0.3.9
+langchain-postgres==0.0.13          # intègre PGVector (même interface VectorStore que FAISS)
+mistralai==1.2.5
+rank_bm25==0.2.2
+snowballstemmer==2.2.0              # stemmer FR (Snowball) pur Python, 0 dep transitive — tokeniseur BM25 FR
+pydantic==2.9.2
+pydantic-settings==2.6.1
+python-dotenv==1.2.2
+PyYAML==6.0.2
+pandas==2.2.3
+numpy==1.26.4
+pyarrow==23.0.1
+beautifulsoup4==4.12.3
+tenacity==9.0.0
+psycopg[binary]==3.2.3              # driver Postgres (psycopg3, requis par langchain-postgres)
+pgvector==0.3.6
+SQLAlchemy==2.0.35              # <2.0.36 historiquement imposé par langchain-community, >=2 par langchain-postgres
+redis==5.2.0
+faiss-cpu==1.9.0                    # uniquement pour le benchmark latence FAISS vs pgvector
+sentence-transformers==3.3.1        # cross-encoder bge-reranker-v2-m3 (re-ranking) ; tire torch CPU + transformers
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+pytest==9.0.3
+streamlit==1.54.0

@@ -1,0 +1,66 @@
+# Slice vertical MVP : API (FastAPI) + Postgres(pgvector) + Redis.
+# Démarrage : docker compose up --build  (l'API auto-charge l'index pgvector au 1er run)
+# Rechargement manuel (optionnel) : docker compose run --rm api python scripts/load_pgvector.py
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: pulse
+      POSTGRES_PASSWORD: pulse
+      POSTGRES_DB: pulsevents
+    ports: ["5432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pulse -d pulsevents"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    # pas de publication de port sur l'hôte : l'API joint Redis via le réseau Docker
+    # (évite les conflits de port 6379 côté Windows).
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  api:
+    build: .
+    env_file: [.env]                # fournit MISTRAL_API_KEY
+    environment:
+      PG_HOST: db
+      PG_PORT: "5432"
+      PG_USER: pulse
+      PG_PASSWORD: pulse
+      PG_DB: pulsevents
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      P11_DATA_DIR: /p11data
+    ports: ["8000:8000"]
+    volumes:
+      - ../P11/data:/p11data:ro     # parquet, embed_cache, index FAISS, qa_dataset (lecture seule)
+      - ./data:/app/data            # cache d'embeddings local (écriture) + résultats bench
+      # dev : code live monté par-dessus le COPY de l'image -> pas de rebuild entre itérations
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./scripts:/app/scripts
+      - ./config.yaml:/app/config.yaml
+      - ./streamlit_app.py:/app/streamlit_app.py
+    depends_on:
+      db: {condition: service_healthy}
+      redis: {condition: service_healthy}
+
+  ui:
+    build: .
+    command: streamlit run streamlit_app.py --server.port 8501 --server.address 0.0.0.0
+    environment:
+      API_URL: http://api:8000
+    ports: ["8501:8501"]
+    depends_on:
+      api: {condition: service_started}
+
+volumes:
+  pgdata:
