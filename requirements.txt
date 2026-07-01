@@ -26,5 +26,5 @@ faiss-cpu==1.9.0                    # uniquement pour le benchmark latence FAISS
 sentence-transformers==3.3.1        # cross-encoder bge-reranker-v2-m3 (re-ranking) ; tire torch CPU + transformers
 fastapi==0.115.5
 uvicorn[standard]==0.32.1
-pytest==8.3.3
+pytest==9.0.3
 streamlit==1.54.0
