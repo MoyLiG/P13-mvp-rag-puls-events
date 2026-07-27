@@ -61,36 +61,40 @@ docker compose run --rm api python scripts/bench_retrieval.py   # recall + laten
 docker compose run --rm api python scripts/bench_memory.py      # effet mémoire
 ```
 
-Mesuré sur le jeu Q/R annoté de P11 (14 questions mono-label, 2 302 chunks) :
+Sortie de `scripts/bench_retrieval.py` sur le jeu Q/R annoté de P11 (14 questions
+mono-label, 2 302 chunks). Chiffres bruts dans `data/eval/bench_retrieval.csv`.
 
-| Variante de retrieval | recall@6 |
-|---|---|
-| Dense seul (pgvector, HNSW) | **0,86** |
-| Hybride BM25 + dense (RRF) | **0,86** |
-| + re-ranking cross-encoder `bge-reranker-v2-m3` | **0,64** |
+| Variante de retrieval | recall@6 | latence médiane | p95 |
+|---|---|---|---|
+| Dense seul (pgvector, HNSW) | **0,86** | 23 ms | 33 ms |
+| Hybride BM25 + dense (RRF) | **0,86** | — | — |
+| Hybride + tokeniseur FR (dé-accent, stopwords, stem) | **0,86** | — | — |
+| Hybride + re-ranking `bge-reranker-v2-m3` | **0,57** | **49 836 ms** | **92 481 ms** |
+| *Rappel : FAISS du POC P11* | — | 13 ms | 14 ms |
 
-| Latence retrieval | médiane | p95 |
-|---|---|---|
-| FAISS (POC P11) | 6,7 ms | 7,5 ms |
-| pgvector HNSW (ce slice) | 14,5 ms | 15,8 ms |
+**Trois résultats négatifs, et c'est le point intéressant.**
 
-**Deux résultats négatifs, et c'est le point intéressant.**
+*Le re-ranking dégrade tout.* Recall de 0,86 à **0,57**, et surtout une latence
+qui passe de 23 ms à **~50 secondes** en médiane — un facteur 2 000. Le
+cross-encoder sacrifie la précision lexicale de BM25 (la requête « gratuits » ne
+remonte plus « entrée gratuite ») et tourne en CPU sur 24 candidats par requête.
+D'où `use_reranker: false` dans `config.yaml` : la feature reste branchée,
+désactivée par la mesure et non par principe.
 
-*Le re-ranking dégrade.* Le cross-encoder sacrifie la précision lexicale de BM25
-— la requête « gratuits » ne remonte plus le document « entrée gratuite » (rang
-0 → 7). Sur un corpus de quasi-doublons évalué en mono-label, il promeut des
-alternatives plausibles mais non étiquetées. D'où `use_reranker: false` par
-défaut dans `config.yaml` : la feature reste branchée, désactivée par la mesure.
+*Le tokeniseur FR n'apporte rien.* Dé-accentuation, stopwords et stemming
+Snowball : **+0,00 point**, 0 question améliorée, 0 dégradée, 14 inchangées. À
+recall@6 l'hybride égale déjà le dense seul — BM25 n'ajoute rien sur ce corpus,
+donc améliorer sa tokenisation ne peut rien changer à un top-6 fixé par le dense.
 
-*L'hybride n'apporte rien à k=6 sur ce corpus.* Un premier bench annonçait
-**0,93** — c'était un artefact : `EnsembleRetriever` renvoie l'union RRF, soit
-~12 documents à k=6, comparés à 6 pour les autres variantes. En cappant à `k`
-(`retriever.invoke(q)[:k]`), l'écart disparaît. La correction est dans
-`scripts/bench_retrieval.py` (fonction `hit_rate`).
+*L'hybride n'apporte rien à k=6.* Un premier bench annonçait **0,93** — artefact :
+`EnsembleRetriever` renvoie l'union RRF, soit ~12 documents à k=6, comparés à 6
+pour les autres variantes. En cappant à `k` (`retriever.invoke(q)[:k]`, fonction
+`hit_rate`), l'écart disparaît.
 
-*Sur la latence*, pgvector est ~2× plus lent que FAISS en local. C'est le prix
-assumé de la migration : ce qu'on achète, c'est la scalabilité multi-instances
-et l'unification vecteurs + relationnel dans une seule base — pas la vitesse.
+*Sur la latence nominale*, pgvector est ~1,8× plus lent que FAISS en local. C'est
+le prix assumé de la migration : ce qu'on achète, c'est la scalabilité
+multi-instances et l'unification vecteurs + relationnel dans une seule base —
+pas la vitesse.
 
 ## Tests
 
