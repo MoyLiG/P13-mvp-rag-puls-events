@@ -1,0 +1,35 @@
+# ---------------------------------------------------------------
+# Stratégie : liste blanche. Tout est exclu, on ne réintègre que ce
+# que le Dockerfile COPY réellement.
+#
+# Raison : .dockerignore et .gitignore sont deux mécanismes
+# INDÉPENDANTS. Sans ce fichier, tout ce qui est exclu de git mais
+# présent sur le disque (.claude/worktrees = 5 copies du dépôt,
+# tasks/, .env, graphify-out/) partait dans le contexte de build et
+# finissait dans les couches de l'image. Soit 761 Mo envoyés au
+# démon à chaque build, dont des fichiers volontairement gardés
+# hors du dépôt.
+#
+# MAINTENANCE : si tu ajoutes un COPY au Dockerfile, ajoute la
+# ligne !correspondante ici, sinon le build échouera sur un
+# « file not found ». C'est le prix de la liste blanche — en
+# échange, aucun nouveau dossier parasite ne peut entrer tout seul.
+# ---------------------------------------------------------------
+
+# 1. Tout exclure
+*
+
+# 2. Réintégrer ce que le Dockerfile COPY (lignes 15, 28-32)
+!requirements.txt
+!config.yaml
+!streamlit_app.py
+!src
+!scripts
+!tests
+
+# 3. Purger le bruit à l'intérieur des dossiers réintégrés
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/.pytest_cache
+**/.ipynb_checkpoints

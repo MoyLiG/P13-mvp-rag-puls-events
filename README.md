@@ -61,6 +61,37 @@ docker compose run --rm api python scripts/bench_retrieval.py   # recall + laten
 docker compose run --rm api python scripts/bench_memory.py      # effet mémoire
 ```
 
+Mesuré sur le jeu Q/R annoté de P11 (14 questions mono-label, 2 302 chunks) :
+
+| Variante de retrieval | recall@6 |
+|---|---|
+| Dense seul (pgvector, HNSW) | **0,86** |
+| Hybride BM25 + dense (RRF) | **0,86** |
+| + re-ranking cross-encoder `bge-reranker-v2-m3` | **0,64** |
+
+| Latence retrieval | médiane | p95 |
+|---|---|---|
+| FAISS (POC P11) | 6,7 ms | 7,5 ms |
+| pgvector HNSW (ce slice) | 14,5 ms | 15,8 ms |
+
+**Deux résultats négatifs, et c'est le point intéressant.**
+
+*Le re-ranking dégrade.* Le cross-encoder sacrifie la précision lexicale de BM25
+— la requête « gratuits » ne remonte plus le document « entrée gratuite » (rang
+0 → 7). Sur un corpus de quasi-doublons évalué en mono-label, il promeut des
+alternatives plausibles mais non étiquetées. D'où `use_reranker: false` par
+défaut dans `config.yaml` : la feature reste branchée, désactivée par la mesure.
+
+*L'hybride n'apporte rien à k=6 sur ce corpus.* Un premier bench annonçait
+**0,93** — c'était un artefact : `EnsembleRetriever` renvoie l'union RRF, soit
+~12 documents à k=6, comparés à 6 pour les autres variantes. En cappant à `k`
+(`retriever.invoke(q)[:k]`), l'écart disparaît. La correction est dans
+`scripts/bench_retrieval.py` (fonction `hit_rate`).
+
+*Sur la latence*, pgvector est ~2× plus lent que FAISS en local. C'est le prix
+assumé de la migration : ce qu'on achète, c'est la scalabilité multi-instances
+et l'unification vecteurs + relationnel dans une seule base — pas la vitesse.
+
 ## Tests
 
 ```bash
